@@ -256,7 +256,6 @@ static ngx_int_t ngx_http_pam_authenticate(ngx_http_request_t *r, ngx_int_t step
 static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
 {
     ngx_int_t steps = 0;
-    ngx_str_t *ctx;
     ngx_int_t rc;
     ngx_http_authnz_pam_loc_conf_t  *loc_conf;
 
