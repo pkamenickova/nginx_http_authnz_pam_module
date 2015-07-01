@@ -17,7 +17,7 @@ static char *ngx_http_authnz_pam_merge_loc_conf(ngx_conf_t *cf, void *parent, vo
 #define _PAM_STEP_ACCOUNT 2
 
 #define _DEFAULT_PAM_REALM "PAM realm"
-#define _DEFAULT_PAM_SERVICE "nginx"
+//#define _DEFAULT_PAM_SERVICE "nginx"
 
 typedef struct {
     ngx_flag_t  active;
@@ -113,7 +113,7 @@ static char * ngx_http_authnz_pam_merge_loc_conf(ngx_conf_t *cf, void *parent, v
     ngx_conf_merge_off_value(conf->basic_auth_fallback, prev->basic_auth_fallback, 0);
     ngx_conf_merge_off_value(conf->active, prev->active, 0);
     ngx_conf_merge_str_value(conf->name, prev->name, _DEFAULT_PAM_REALM);
-    ngx_conf_merge_str_value(conf->pam_service_name, prev->pam_service_name, _DEFAULT_PAM_SERVICE);
+    ngx_conf_merge_str_value(conf->pam_service_name, prev->pam_service_name, "");
     ngx_conf_merge_str_value(conf->expired_redirect_url, prev->expired_redirect_url, "");
 
     return NGX_CONF_OK;
