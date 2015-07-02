@@ -1,6 +1,7 @@
 Nginx PAM module for authn and authz
 =================================
-ngx_http_authnz_pam_module adds PAM authentication and authorization to nginx web server. It extends stogh's PAM module which uses PAM only as authentication/authorization provider for Basic authentication and adds an authorization support for different authentication modules (e.g. [Kerberos](https://github.com/stnoonan/spnego-http-auth-nginx-module)).
+ngx_http_authnz_pam_module adds PAM authentication and authorization to nginx web server and provides authorization support for authentication modules (e.g. [Kerberos](https://github.com/stnoonan/spnego-http-auth-nginx-module)).
+It extends [stogh's PAM module](https://github.com/stogh/ngx_http_auth_pam_module) which uses PAM only as authentication/authorization provider for Basic HTTP authentication.
 
 This module is still WIP.
 
