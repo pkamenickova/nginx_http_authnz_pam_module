@@ -210,42 +210,42 @@ static ngx_int_t ngx_http_pam_authenticate(ngx_http_request_t *r, ngx_int_t step
     ret = pam_start((const char *) loc_conf->pam_service_name.data, user, &pam_conversation, &pamh);
 
     if (ret == PAM_SUCCESS) {
-       if (steps & _PAM_STEP_AUTH) {
-           ret = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
-       }
+        if (steps & _PAM_STEP_AUTH) {
+            ret = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
+        }
 
-       if ((ret == PAM_SUCCESS) && (steps & _PAM_STEP_ACCOUNT)) {
-           ret = pam_acct_mgmt(pamh, PAM_DISALLOW_NULL_AUTHTOK);
-       }
+        if ((ret == PAM_SUCCESS) && (steps & _PAM_STEP_ACCOUNT)) {
+            ret = pam_acct_mgmt(pamh, PAM_DISALLOW_NULL_AUTHTOK);
+        }
 
-       if (ret == PAM_NEW_AUTHTOK_REQD) {
-           if (loc_conf->expired_redirect_url.len != 0) {
-               pam_authnz_debug1("pam_authnz: Redirect to: %s", loc_conf->expired_redirect_url.data);
+        if (ret == PAM_NEW_AUTHTOK_REQD) {
+            if (loc_conf->expired_redirect_url.len != 0) {
+                pam_authnz_debug1("pam_authnz: Redirect to: %s", loc_conf->expired_redirect_url.data);
 
-               r->headers_out.location = ngx_list_push(&r->headers_out.headers);
-               if (r->headers_out.location == NULL) {
-                   return NGX_HTTP_INTERNAL_SERVER_ERROR;
-               }
+                r->headers_out.location = ngx_list_push(&r->headers_out.headers);
+                if (r->headers_out.location == NULL) {
+                    return NGX_HTTP_INTERNAL_SERVER_ERROR;
+                }
 
-               r->headers_out.location->hash = 1;
-               r->headers_out.location->key.len = sizeof("Location") - 1;
-               r->headers_out.location->key.data = (u_char *) "Location";
-               r->headers_out.location->value.len = loc_conf->expired_redirect_url.len;              
-               r->headers_out.location->value.data = loc_conf->expired_redirect_url.data;
-               return NGX_HTTP_TEMPORARY_REDIRECT;
-           }
-       }
+                r->headers_out.location->hash = 1;
+                r->headers_out.location->key.len = sizeof("Location") - 1;
+                r->headers_out.location->key.data = (u_char *) "Location";
+                r->headers_out.location->value.len = loc_conf->expired_redirect_url.len;              
+                r->headers_out.location->value.data = loc_conf->expired_redirect_url.data;
+                return NGX_HTTP_TEMPORARY_REDIRECT;
+            }
+        }
      
-       pam_end(pamh, ret); 
-       if (ret == PAM_SUCCESS)
-           return NGX_OK;
+        pam_end(pamh, ret); 
+        if (ret == PAM_SUCCESS)
+            return NGX_OK;
 
-       return NGX_HTTP_FORBIDDEN;
+        return NGX_HTTP_FORBIDDEN;
     }
     else {
-       pam_authnz_debug1("pam_authnz: PAM service could not start: ",pam_strerror(pamh, ret));
-       pam_end(pamh, ret);
-       return NGX_ERROR;
+        pam_authnz_debug1("pam_authnz: PAM service could not start: ", pam_strerror(pamh, ret));
+        pam_end(pamh, ret);
+        return NGX_ERROR;
     } 
 }
 
@@ -273,26 +273,26 @@ static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
     pam_authnz_debug1("pam_authnz: PAM service name is set to: %s", loc_conf->pam_service_name.data);
 
     if (r->headers_in.user.data == NULL) {
-    	if (loc_conf->basic_auth_fallback == 1) {
-			//Basic authentication fallback
-			//Called only if satisfy any is set and Kerberos failed,
-			//which is bad configuration, but still have to be handled.
-			//or if there is no Kerberos configured at all
-			//that means I have to authenticate before authorization
-			pam_authnz_debug0("pam_authnz: Basic auth fallback");
-			rc = ngx_http_auth_basic_user(r);
+        if (loc_conf->basic_auth_fallback == 1) {
+            //Basic authentication fallback
+            //Called only if satisfy any is set and Kerberos failed,
+            //which is bad configuration, but still have to be handled.
+            //or if there is no Kerberos configured at all
+            //that means I have to authenticate before authorization
+            pam_authnz_debug0("pam_authnz: Basic auth fallback");
+            rc = ngx_http_auth_basic_user(r);
 
-			if (rc == NGX_DECLINED) {
-				return ngx_http_authnz_pam_return_www_auth(r, &loc_conf->name);
-			}
-			if (rc == NGX_ERROR) {
-				return NGX_HTTP_INTERNAL_SERVER_ERROR;
-			}
+            if (rc == NGX_DECLINED) {
+                return ngx_http_authnz_pam_return_www_auth(r, &loc_conf->name);
+            }
+            if (rc == NGX_ERROR) {
+                return NGX_HTTP_INTERNAL_SERVER_ERROR;
+            }
 
-			steps = _PAM_STEP_AUTH;
-		}
+            steps = _PAM_STEP_AUTH;
+        }
         else {
-   	    	return NGX_HTTP_UNAUTHORIZED;
+            return NGX_HTTP_UNAUTHORIZED;
         }
     }
   
@@ -326,6 +326,6 @@ static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
     *p = '\0';
 
     steps = steps + _PAM_STEP_ACCOUNT;
-    rc = ngx_http_pam_authenticate(r, steps, loc_conf, (const char *) name_buf,  (const char *) pass_buf);
+    rc = ngx_http_pam_authenticate(r, steps, loc_conf, (const char *) name_buf, (const char *) pass_buf);
     return rc;
 };
