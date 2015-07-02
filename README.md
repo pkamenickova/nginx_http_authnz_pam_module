@@ -10,6 +10,7 @@ Installation
 -------------
 1. Install [nginx](http://wiki.nginx.org/Install).
 1. Clone this module.
+1. Install pam-devel package.
 1. Add the authnz modules through --add-module option. PAM module should be added last. For example:
 
 	./configure --add-module=spnego-http-auth-nginx-module --add-module=nginx_http_authnz_pam_module
