@@ -21,9 +21,47 @@ Configuration
 You can set the PAM module through these directives:
 * `authnz_pam on|off`: Default value is `off`
 * `authnz_pam_service`: PAM service name. This directive is required and must contain non-empty string.
-* `authnz_pam_basic_fallback on|off`: Use the Basic HTTP authentication in case of failure of previous authentication module failure. Default value is `off`. For now it's not recommended to use this directive without previous authentication module.
+* `authnz_pam_basic_fallback on|off`: Default value is `off`. Use the Basic HTTP authentication in case of failure of previous authentication module. 
+Basic authentication fallback can be used on its own (without previous authentication module) but it's not recommended for now.
 * `authnz_pam_name`: Realm used for Basic HTTP authentication. Default value is `PAM realm`.
 * `authnz_pam_expired_redirect_url`: URL used for redirection in case of expired authentication token.
+
+
+Example configuration
+-------------
+To use PAM on location /test add following lines into `conf/nginx.conf`:
+
+    location /test {
+        satisfy all;
+        
+        authnz_pam on;
+        authnz_pam_service random-svc;
+
+        #configuration directives of authentication module (e.g. Kerberos)
+    }
+
+If you want to use PAM module as a authentication/authorization provider for Basic authentication fallback try this:
+
+    location /test2 {
+        satisfy any;
+
+        authnz_pam on;
+        authnz_pam_service random-svc;
+
+        authnz_pam_basic_fallback on
+        authnz_pam_name "Basic realm=PAM"
+
+        #configuration directives of authentication module (e.g. Kerberos)
+    }
+
+(This usage does not make much sense for now (because if previous authn module succeeds then PAM module is not called), but I'm working on solution.)
+
+
+
+Now you have to create /etc/pam.d/random-svc configuration file and specify which PAM modules will be used. For example to authenticate/authorize throught SSSD use following lines:
+
+    auth        required        pam_sss.so
+    account     required        pam_sss.so
 
 Debugging
 -------------
