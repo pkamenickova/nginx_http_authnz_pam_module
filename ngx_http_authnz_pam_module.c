@@ -214,12 +214,14 @@ static ngx_int_t ngx_http_pam_authenticate(ngx_http_request_t *r, ngx_int_t step
     if (ret == PAM_SUCCESS) {
         if (steps & _PAM_STEP_AUTH) {
             ret = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
+            pam_authnz_debug0("pam_authnz: AUTHENTICATION");
             if (ret != PAM_SUCCESS)
                 pam_authnz_log_error("pam_authnz: Authentication failed");
         }
 
         if ((ret == PAM_SUCCESS) && (steps & _PAM_STEP_ACCOUNT)) {
             ret = pam_acct_mgmt(pamh, PAM_DISALLOW_NULL_AUTHTOK);
+            pam_authnz_debug0("pam_authnz: AUTHORIZATION");
             if (ret != PAM_SUCCESS)
                 pam_authnz_log_error("pam_authnz: Authorization failed");
         }
@@ -279,13 +281,8 @@ static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
 
     pam_authnz_debug1("pam_authnz: PAM service name is set to: %s", loc_conf->pam_service_name.data);
 
-    if (r->headers_in.user.data == NULL) {
-        if (loc_conf->basic_auth_fallback == 1) {
-            //Basic authentication fallback
-            //Called only if satisfy any is set and Kerberos failed,
-            //which is bad configuration, but still have to be handled.
-            //or if there is no Kerberos configured at all
-            //that means I have to authenticate before authorization
+    if (loc_conf->basic_auth_fallback == 1) {
+        if (r->headers_in.user.data == NULL) {
             pam_authnz_debug0("pam_authnz: Basic auth fallback");
             rc = ngx_http_auth_basic_user(r);
 
@@ -299,7 +296,8 @@ static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
             steps = _PAM_STEP_AUTH;
         }
         else {
-            return NGX_HTTP_UNAUTHORIZED;
+            pam_authnz_debug0("pam_authnz: Authenticated or false header");
+            //Need to be handled
         }
     }
   
