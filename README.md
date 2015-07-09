@@ -21,8 +21,7 @@ Configuration
 You can set the PAM module through these directives:
 * `authnz_pam on|off`: Default value is `off`
 * `authnz_pam_service`: PAM service name. This directive is required and must contain non-empty string.
-* `authnz_pam_basic_fallback on|off`: Default value is `off`. Use the Basic HTTP authentication in case of failure of previous authentication module. 
-Basic authentication fallback can be used on its own (without previous authentication module) but it's not recommended for now.
+* `authnz_pam_basic_fallback on|off`: Default value is `off`. Use PAM as Basic HTTP authentication provider on as a fallback in case of previous authentication module failure. 
 * `authnz_pam_name`: Realm used for Basic HTTP authentication. Default value is `PAM realm`.
 * `authnz_pam_expired_redirect_url`: URL used for redirection in case of expired authentication token.
 
@@ -34,7 +33,7 @@ To use PAM on location /test add following lines into `conf/nginx.conf`:
     location /test {
         satisfy all;
 
-        #configuration directives of authentication module (e.g. [Kerberos](https://github.com/stnoonan/spnego-http-auth-nginx-module))
+        #configuration directives of authentication module (e.g. Kerberos)
 	auth_gss on;
         auth_gss_keytab /etc/http.keytab;
         auth_gss_realm EXAMPLE.TEST;
@@ -46,21 +45,37 @@ To use PAM on location /test add following lines into `conf/nginx.conf`:
 	authnz_pam_expired_redirect_url "https://auth.example.test/reset_password";
     }
 
+
 If you want to use PAM module as an authentication/authorization provider for Basic authentication try this:
 
     location /test2 {
-        satisfy any;
-
         authnz_pam on;
         authnz_pam_service random-svc;
-
         authnz_pam_basic_fallback on;
         authnz_pam_name "Basic realm=PAM";
-
     }
 
-(The "satisfy any" directive does not make much sense for now (because if previous authn module succeeds then PAM module is not called), but I'm working on solution.)
 
+You can also use Basic authentication as a fallback in case of previous authentication module failure:
+
+    location /test3 {
+        satisfy any;
+
+	#configuration directives of authentication module (e.g. Kerberos)
+        auth_gss on;
+        auth_gss_keytab /etc/http.keytab;
+        auth_gss_realm EXAMPLE.TEST;
+        auth_gss_service_name HTTP/test.example.test;
+
+	#configuration directives of PAM module - Basic fallback (authn and authz)
+        authnz_pam on;
+        authnz_pam_service random-svc;
+        authnz_pam_basic_fallback on;
+        authnz_pam_name "Basic realm=PAM";
+    }
+
+
+This configuration does not make much sense for now - because if previous authn module succeeds then PAM module is not called and authorization is not done - but I'm working on the solution.
 
 
 Now you have to create PAM service configuration file (in this case /etc/pam.d/random-svc) and specify which PAM modules will be used. For example to authenticate/authorize throught SSSD use following lines:
