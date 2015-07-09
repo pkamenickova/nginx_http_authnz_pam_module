@@ -21,7 +21,7 @@ Configuration
 You can set the PAM module through these directives:
 * `authnz_pam on|off`: Default value is `off`
 * `authnz_pam_service`: PAM service name. This directive is required and must contain non-empty string.
-* `authnz_pam_basic_fallback on|off`: Default value is `off`. Use PAM as Basic HTTP authentication provider on as a fallback in case of previous authentication module failure. 
+* `authnz_pam_basic_fallback on|off`: Default value is `off`. Use PAM as Basic HTTP authentication provider or as a fallback in case of previous authentication module failure. 
 * `authnz_pam_name`: Realm used for Basic HTTP authentication. Default value is `PAM realm`.
 * `authnz_pam_expired_redirect_url`: URL used for redirection in case of expired authentication token.
 
@@ -40,9 +40,9 @@ To use PAM on location /test add following lines into `conf/nginx.conf`:
         auth_gss_service_name HTTP/test.example.test;
 
 	#configuration directives of PAM module - authorization
-	authnz_pam on;
+        authnz_pam on;
         authnz_pam_service "random-svc";
-	authnz_pam_expired_redirect_url "https://auth.example.test/reset_password";
+        authnz_pam_expired_redirect_url "https://auth.example.test/reset_password";
     }
 
 
