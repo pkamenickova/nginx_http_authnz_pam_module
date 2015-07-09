@@ -281,8 +281,9 @@ static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
 
     pam_authnz_debug1("pam_authnz: PAM service name is set to: %s", loc_conf->pam_service_name.data);
 
-    if (loc_conf->basic_auth_fallback == 1) {
-        if (r->headers_in.user.data == NULL) {
+
+    if (r->headers_in.user.len == 0) {
+        if (loc_conf->basic_auth_fallback == 1) {
             pam_authnz_debug0("pam_authnz: Basic auth fallback");
             rc = ngx_http_auth_basic_user(r);
 
@@ -296,11 +297,17 @@ static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
             steps = _PAM_STEP_AUTH;
         }
         else {
-            pam_authnz_debug0("pam_authnz: Authenticated or false header");
-            //Need to be handled
+            pam_authnz_debug0("pam_authnz: Everything is lost.");
+            return NGX_DECLINED;
         }
     }
-  
+
+    else {
+            //TODO: Need to be handled
+            pam_authnz_debug1("pam_authnz: User set to: %s", r->headers_in.user.data);
+            pam_authnz_debug0("pam_authnz: Authenticated or false header");
+    }
+
     u_char *name_buf, *pass_buf, *p;
     size_t name_len, pass_len;
 
