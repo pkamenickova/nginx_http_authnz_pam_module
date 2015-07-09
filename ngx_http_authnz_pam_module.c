@@ -13,6 +13,8 @@ static char *ngx_http_authnz_pam_merge_loc_conf(ngx_conf_t *cf, void *parent, vo
 #define pam_authnz_debug0(msg) ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, msg)
 #define pam_authnz_debug1(msg, one) ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, msg, one)
 
+#define pam_authnz_log_error(fmt, args...) ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, fmt, ##args)
+
 #define _PAM_STEP_AUTH 1
 #define _PAM_STEP_ACCOUNT 2
 
@@ -212,10 +214,14 @@ static ngx_int_t ngx_http_pam_authenticate(ngx_http_request_t *r, ngx_int_t step
     if (ret == PAM_SUCCESS) {
         if (steps & _PAM_STEP_AUTH) {
             ret = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
+            if (ret != PAM_SUCCESS)
+                pam_authnz_log_error("pam_authnz: Authentication failed");
         }
 
         if ((ret == PAM_SUCCESS) && (steps & _PAM_STEP_ACCOUNT)) {
             ret = pam_acct_mgmt(pamh, PAM_DISALLOW_NULL_AUTHTOK);
+            if (ret != PAM_SUCCESS)
+                pam_authnz_log_error("pam_authnz: Authorization failed");
         }
 
         if (ret == PAM_NEW_AUTHTOK_REQD) {
@@ -224,6 +230,7 @@ static ngx_int_t ngx_http_pam_authenticate(ngx_http_request_t *r, ngx_int_t step
 
                 r->headers_out.location = ngx_list_push(&r->headers_out.headers);
                 if (r->headers_out.location == NULL) {
+                    pam_authnz_log_error("pam_authnz: Redirect failed");
                     return NGX_HTTP_INTERNAL_SERVER_ERROR;
                 }
 
@@ -243,7 +250,7 @@ static ngx_int_t ngx_http_pam_authenticate(ngx_http_request_t *r, ngx_int_t step
         return NGX_HTTP_FORBIDDEN;
     }
     else {
-        pam_authnz_debug1("pam_authnz: PAM service could not start: ", pam_strerror(pamh, ret));
+        pam_authnz_log_error("pam_authnz: PAM service could not start: %s", pam_strerror(pamh, ret));
         pam_end(pamh, ret);
         return NGX_ERROR;
     } 
@@ -266,7 +273,7 @@ static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
     }
 
     if (loc_conf->pam_service_name.len == 0) {
-        pam_authnz_debug0("pam_authnz: Empty PAM service name");
+	pam_authnz_log_error("pam_authnz: Empty PAM service name");
         return NGX_ERROR;
     }
 
