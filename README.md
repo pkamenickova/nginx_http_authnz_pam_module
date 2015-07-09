@@ -33,14 +33,20 @@ To use PAM on location /test add following lines into `conf/nginx.conf`:
 
     location /test {
         satisfy all;
-        
-        authnz_pam on;
-        authnz_pam_service random-svc;
 
-        #configuration directives of authentication module (e.g. Kerberos)
+        #configuration directives of authentication module (e.g. [Kerberos](https://github.com/stnoonan/spnego-http-auth-nginx-module))
+	auth_gss on;
+        auth_gss_keytab /etc/http.keytab;
+        auth_gss_realm EXAMPLE.TEST;
+        auth_gss_service_name HTTP/test.example.test;
+
+	#configuration directives of PAM module - authorization
+	authnz_pam on;
+        authnz_pam_service "random-svc";
+	authnz_pam_expired_redirect_url "https://auth.example.test/reset_password";
     }
 
-If you want to use PAM module as a authentication/authorization provider for Basic authentication fallback try this:
+If you want to use PAM module as an authentication/authorization provider for Basic authentication try this:
 
     location /test2 {
         satisfy any;
@@ -48,20 +54,21 @@ If you want to use PAM module as a authentication/authorization provider for Bas
         authnz_pam on;
         authnz_pam_service random-svc;
 
-        authnz_pam_basic_fallback on
-        authnz_pam_name "Basic realm=PAM"
+        authnz_pam_basic_fallback on;
+        authnz_pam_name "Basic realm=PAM";
 
-        #configuration directives of authentication module (e.g. Kerberos)
     }
 
-(This usage does not make much sense for now (because if previous authn module succeeds then PAM module is not called), but I'm working on solution.)
+(The "satisfy any" directive does not make much sense for now (because if previous authn module succeeds then PAM module is not called), but I'm working on solution.)
 
 
 
-Now you have to create /etc/pam.d/random-svc configuration file and specify which PAM modules will be used. For example to authenticate/authorize throught SSSD use following lines:
+Now you have to create PAM service configuration file (in this case /etc/pam.d/random-svc) and specify which PAM modules will be used. For example to authenticate/authorize throught SSSD use following lines:
 
     auth        required        pam_sss.so
     account     required        pam_sss.so
+
+If /etc/pam.d/<service name> file doesn't exist, the default /etc/pam.conf is used.
 
 Debugging
 -------------
