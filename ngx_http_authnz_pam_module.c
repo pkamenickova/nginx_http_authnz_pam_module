@@ -339,5 +339,12 @@ static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
 
     steps = steps + _PAM_STEP_ACCOUNT;
     rc = ngx_http_pam_authenticate(r, steps, loc_conf, (const char *) name_buf, (const char *) pass_buf);
+
+    /* Authentication or authorization failed - clear remote_user */
+    if (rc != NGX_OK) {
+        r->headers_in.user.data = (u_char *) "";
+        r->headers_in.user.len = 0;
+    }
+
     return rc;
 };
