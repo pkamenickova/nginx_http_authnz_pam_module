@@ -21,7 +21,7 @@ Configuration
 You can set the PAM module through these directives:
 * `authnz_pam on|off`: Default value is `off`
 * `authnz_pam_service`: PAM service name. This directive is required and must contain non-empty string.
-* `authnz_pam_basic_fallback on|off`: Default value is `off`. Use PAM as Basic HTTP authentication provider or as a fallback in case of previous authentication module failure. 
+* `authnz_pam_basic on|off`: Default value is `off`. Use PAM as Basic HTTP authentication provider or as Basic authentication fallback in case of previous authentication module failure. 
 * `authnz_pam_name`: Realm used for Basic HTTP authentication. Default value is `PAM realm`.
 * `authnz_pam_expired_redirect_url`: URL used for redirection in case of expired authentication token.
 
@@ -51,7 +51,7 @@ If you want to use PAM module as an authentication/authorization provider for Ba
     location /test2 {
         authnz_pam on;
         authnz_pam_service random-svc;
-        authnz_pam_basic_fallback on;
+        authnz_pam_basic on;
         authnz_pam_name "Basic realm=PAM";
     }
 
@@ -70,7 +70,7 @@ You can also use Basic authentication as a fallback in case of previous authenti
 	#configuration directives of PAM module - Basic fallback (authn and authz)
         authnz_pam on;
         authnz_pam_service random-svc;
-        authnz_pam_basic_fallback on;
+        authnz_pam_basic on;
         authnz_pam_name "Basic realm=PAM";
     }
 

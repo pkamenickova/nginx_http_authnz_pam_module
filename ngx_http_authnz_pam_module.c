@@ -25,7 +25,7 @@ typedef struct {
     ngx_flag_t  active;
     ngx_str_t   name;          
     ngx_str_t   pam_service_name;
-    ngx_flag_t  basic_auth_fallback;
+    ngx_flag_t  basic_auth;
     ngx_str_t   expired_redirect_url;
 } ngx_http_authnz_pam_loc_conf_t;
 
@@ -54,11 +54,11 @@ static ngx_command_t ngx_http_authnz_pam_commands[] = {
       NULL
     },
 
-    { ngx_string("authnz_pam_basic_fallback"),
+    { ngx_string("authnz_pam_basic"),
       NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_authnz_pam_loc_conf_t, basic_auth_fallback),
+      offsetof(ngx_http_authnz_pam_loc_conf_t, basic_auth),
       NULL
     },
 
@@ -102,7 +102,7 @@ static void * ngx_http_authnz_pam_create_loc_conf(ngx_conf_t *cf)
     }
 
     conf->active = NGX_CONF_UNSET;
-    conf->basic_auth_fallback = NGX_CONF_UNSET;
+    conf->basic_auth = NGX_CONF_UNSET;
 
     return conf;
 }
@@ -112,7 +112,7 @@ static char * ngx_http_authnz_pam_merge_loc_conf(ngx_conf_t *cf, void *parent, v
     ngx_http_authnz_pam_loc_conf_t *prev = parent;
     ngx_http_authnz_pam_loc_conf_t *conf = child;
 
-    ngx_conf_merge_off_value(conf->basic_auth_fallback, prev->basic_auth_fallback, 0);
+    ngx_conf_merge_off_value(conf->basic_auth, prev->basic_auth, 0);
     ngx_conf_merge_off_value(conf->active, prev->active, 0);
     ngx_conf_merge_str_value(conf->name, prev->name, _DEFAULT_PAM_REALM);
     ngx_conf_merge_str_value(conf->pam_service_name, prev->pam_service_name, "");
@@ -215,8 +215,10 @@ static ngx_int_t ngx_http_pam_authenticate(ngx_http_request_t *r, ngx_int_t step
         if (steps & _PAM_STEP_AUTH) {
             ret = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
             pam_authnz_debug0("pam_authnz: AUTHENTICATION");
-            if (ret != PAM_SUCCESS)
+            if (ret != PAM_SUCCESS) {
                 pam_authnz_log_error("pam_authnz: Authentication failed");
+                return NGX_HTTP_UNAUTHORIZED;
+            }
         }
 
         if ((ret == PAM_SUCCESS) && (steps & _PAM_STEP_ACCOUNT)) {
@@ -283,8 +285,8 @@ static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
 
 
     if (r->headers_in.user.len == 0) {
-        if (loc_conf->basic_auth_fallback == 1) {
-            pam_authnz_debug0("pam_authnz: Basic auth fallback");
+        if (loc_conf->basic_auth == 1) {
+            pam_authnz_debug0("pam_authnz: Basic auth");
             rc = ngx_http_auth_basic_user(r);
 
             if (rc == NGX_DECLINED) {
@@ -297,15 +299,13 @@ static ngx_int_t ngx_http_authnz_pam_handler(ngx_http_request_t *r)
             steps = _PAM_STEP_AUTH;
         }
         else {
-            pam_authnz_debug0("pam_authnz: Everything is lost.");
+            pam_authnz_debug0("pam_authnz: Nothing to do. Everything is lost.");
             return NGX_DECLINED;
         }
     }
 
     else {
-            //TODO: Need to be handled
             pam_authnz_debug1("pam_authnz: User set to: %s", r->headers_in.user.data);
-            pam_authnz_debug0("pam_authnz: Authenticated or false header");
     }
 
     u_char *name_buf, *pass_buf, *p;
