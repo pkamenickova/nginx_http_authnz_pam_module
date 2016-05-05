@@ -190,8 +190,15 @@ static int ngx_auth_pam_conv(int num_msg, const struct pam_message ** msg, struc
     {
         response[i].resp = 0;
         response[i].resp_retcode = 0;
-        if (msg[i]->msg_style == PAM_PROMPT_ECHO_OFF) 
-            response[i].resp = strdup(appdata_ptr);
+        if (msg[i]->msg_style == PAM_PROMPT_ECHO_OFF) {
+            if (i == 0) {
+                response[i].resp = strdup(appdata_ptr);
+            }
+            else
+            {
+                response[i].resp = NULL;
+            }
+        }
         else 
         {
             free(response);
